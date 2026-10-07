@@ -1,5 +1,0 @@
--r requirements.txt
-pillow
-numpy
-opencv-python-headless
-rembg[cpu]
