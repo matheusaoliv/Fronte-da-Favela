@@ -30,6 +30,13 @@
 
 <p><sub>Building useful software and sharing the work in public.</sub></p>
 
+<h2>Who I am</h2>
+
+<p align="center">
+<img src="./matheus-ascii.svg" width="42.38%" alt="ASCII art monogram M" />
+<img src="./info-card.svg" width="56.12%" alt="Matheus de Andrade Oliveira, Full-Stack Developer at Japeri City Hall. Stack: TypeScript, React, Node.js, React Native, Flutter, PostgreSQL, AWS" />
+</p>
+
 <h2>Proof at a glance</h2>
 
 <table width="100%">
@@ -89,10 +96,7 @@
 <h2>Consistency signal</h2>
 
 <p align="center">
-<picture>
-  <source media="(prefers-color-scheme: light)" srcset="https://www.gitskins.com/api/section/heatmap?username=matheusaoliv&theme=github-dark&avatar=https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F107213643%3Fv%3D4&v=recruiter-heatmap-1&mode=light" />
-  <img src="https://www.gitskins.com/api/section/heatmap?username=matheusaoliv&theme=github-dark&avatar=https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F107213643%3Fv%3D4&v=recruiter-heatmap-1&mode=dark" width="100%" alt="matheusaoliv contribution activity" />
-</picture>
+<img src="./contrib-heatmap.svg" width="100%" alt="matheusaoliv contribution activity in the last year, refreshed daily" />
 </p>
 
 <hr />
@@ -105,3 +109,11 @@
 </table>
 
 <p align="center"><sub>matheusaoliv · recruiter-ready profile generated with <a href="https://www.gitskins.com/readme-generator">GitSkins</a></sub></p>
+
+<!--
+Como funciona a parte animada (o resto vem do GitSkins):
+- matheus-ascii.svg, info-card.svg e contrib-heatmap.svg têm a animação dentro do próprio SVG.
+- scripts/make_info_card.py: edite INFO para mudar o card.
+- scripts/make_ascii_svg.py: gera a arte ASCII (aceita foto, veja scripts/prep_photo.py).
+- .github/workflows/update-profile-art.yml: todo dia baixa as contribuições e regenera o heatmap e o card.
+-->
