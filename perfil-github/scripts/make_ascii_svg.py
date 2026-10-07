@@ -4,15 +4,14 @@
     python scripts/make_ascii_svg.py source-prepped.png   # retrato a partir de foto
 
 Para foto, rode antes scripts/prep_photo.py (remove fundo e aumenta contraste).
-Cada linha é revelada por uma "tampa" da cor do fundo que desliza para a
-direita em passos de um caractere, com um cursor verde na borda. Toca uma vez
-ao carregar e congela.
+Cada linha aparece um caractere por vez (clip animado com SMIL), com um
+cursor verde na borda. Toca uma vez ao carregar e congela.
 """
 import sys
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont, ImageOps
 
-from svgkit import ACCENT, BG, TEXT, TITLE_H, esc, window, write
+from svgkit import ACCENT, TEXT, TITLE_H, esc, window, write
 
 RAMP = " .`:-=+*cs#%@"  # claro -> escuro; o espaço some no fundo
 
@@ -95,40 +94,37 @@ def main():
     img = from_photo(sys.argv[1]) if len(sys.argv) > 1 else monogram()
     lines = to_ascii(img)
 
-    css = f"""
-.art {{ font-size: {CELL_W / 0.6:.2f}px; white-space: pre; }}
-.cv {{ animation: wipe .6s steps({COLS + 1}, end) both; }}
-@keyframes wipe {{ from {{ transform: translateX(0); }} to {{ transform: translateX({ART_W + CELL_W:.2f}px); }} }}
-.cur {{ opacity: 0; animation: on .6s step-end; }}
-@keyframes on {{ from, to {{ opacity: 1; }} }}
-@media (prefers-reduced-motion: reduce) {{ .cv {{ display: none; }} }}
-"""
-    rows, covers = [], []
+    # Cada linha fica atrás de um clip que alarga um caractere por vez (SMIL),
+    # com o cursor verde andando junto. Toca uma vez e congela.
+    dur = 0.6
+    steps = ";".join(f"{k * CELL_W:.1f}" for k in range(COLS + 1)) + f";{ART_W + 2}"
+    xs = ";".join(f"{PAD_X + k * CELL_W:.1f}" for k in range(COLS + 2))
+    rows, clips = [], []
     for i, line in enumerate(lines):
         if not line.strip():
             continue
         y = TOP + i * ROW_H
-        delay = f"animation-delay:{0.2 + i * 0.075:.3f}s"
-        rows.append(
-            f'<text x="{PAD_X}" y="{y + ROW_H - 2.5:.2f}" textLength="{ART_W}" '
-            f'lengthAdjust="spacing" xml:space="preserve">{esc(line)}</text>'
+        begin = f'begin="{0.2 + i * 0.075:.3f}s" dur="{dur}s"'
+        clips.append(
+            f'<clipPath id="r{i}"><rect x="{PAD_X - 1}" y="{y:.2f}" width="0" height="{ROW_H}">'
+            f'<animate attributeName="width" values="{steps}" calcMode="discrete" {begin} fill="freeze"/>'
+            f"</rect></clipPath>"
         )
-        covers.append(
-            f'<g class="cv" style="{delay}">'
-            f'<rect x="{PAD_X - 1}" y="{y:.2f}" width="{ART_W + 2}" height="{ROW_H}" fill="{BG}"/>'
-            f'<rect class="cur" style="{delay}" x="{PAD_X}" y="{y + 1:.2f}" width="{CELL_W:.2f}" height="{ROW_H - 2}" fill="{ACCENT}"/>'
-            f"</g>"
+        rows.append(
+            f'<text clip-path="url(#r{i})" x="{PAD_X}" y="{y + ROW_H - 2.5:.2f}" textLength="{ART_W}" '
+            f'lengthAdjust="spacing" xml:space="preserve">{esc(line)}</text>'
+            f'<rect x="{PAD_X}" y="{y + 1:.2f}" width="{CELL_W:.2f}" height="{ROW_H - 2}" fill="{ACCENT}" opacity="0">'
+            f'<animate attributeName="x" values="{xs}" calcMode="discrete" {begin} fill="freeze"/>'
+            f'<set attributeName="opacity" to="1" {begin}/></rect>'
         )
 
+    css = f".art {{ font-size: {CELL_W / 0.6:.2f}px; white-space: pre; }}"
     defs = (
-        f'<clipPath id="art"><rect x="{PAD_X - 1}" y="{TOP:.2f}" width="{ART_W + 2}" height="{ART_H}"/></clipPath>'
-        f'<linearGradient id="ink" gradientUnits="userSpaceOnUse" x1="0" y1="{TOP:.2f}" x2="0" y2="{TOP + ART_H:.2f}">'
+        "".join(clips)
+        + f'<linearGradient id="ink" gradientUnits="userSpaceOnUse" x1="0" y1="{TOP:.2f}" x2="0" y2="{TOP + ART_H:.2f}">'
         f'<stop offset="0" stop-color="{TEXT}"/><stop offset="1" stop-color="#7d8590"/></linearGradient>'
     )
-    body = (
-        f'<g clip-path="url(#art)"><g class="art" fill="url(#ink)">{"".join(rows)}</g>'
-        f'{"".join(covers)}</g>'
-    )
+    body = f'<g class="art" fill="url(#ink)">{"".join(rows)}</g>'
     label = "ASCII art monogram M" if len(sys.argv) == 1 else "ASCII art portrait"
     write("matheus-ascii.svg", window(WIDTH, HEIGHT, "matheus@github: ~", label, body, css, defs))
 
